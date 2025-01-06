@@ -1,6 +1,6 @@
 use rand::Rng;
 use std::collections::VecDeque;
-use std::io::{self, Write}; // debugging only
+use std::io::{self, Write}; // for raw printing only
 
 #[derive(Debug, Clone, Copy)]
 struct Board {
@@ -88,10 +88,13 @@ impl Snake {
             Direction::Right => Point::move_right(head),
         };
 
+        self.body.push_front(new_head);
+    }
+
+    pub fn shrink_tail(&mut self) {
         self.body
             .pop_back()
-            .expect("Snake Disappeared... This is a Bug");
-        self.body.push_front(new_head);
+            .unwrap();
     }
 
     pub fn bit_itself(&self) -> bool {
@@ -156,6 +159,18 @@ impl Game {
         if self.snake.hit_wall(&self.board) || self.snake.bit_itself() {
             self.running = false
         }
+        let head_pos = *self.snake.body.front().unwrap();
+
+        if head_pos == self.fruit {
+            self.fruit = loop {
+                let new_fruit = Point::get_random_with_offset(&self.board, 0);
+                if !self.snake.contains_point(new_fruit) {
+                    break new_fruit;
+                }
+            }
+        } else {
+            self.snake.shrink_tail();
+        }
     }
 
     pub fn draw_raw(&self) {
@@ -173,9 +188,9 @@ impl Game {
                     print!("."); // Empty space
                 }
             }
-            println!(); // Move to the next line after each row
+            println!(); 
         }
-        println!(); // Add an extra line for spacing
+        println!();
     }
 }
 
