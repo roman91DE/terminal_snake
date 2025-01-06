@@ -32,11 +32,11 @@ impl Point {
         let mut rng = rand::thread_rng();
 
         // Ensure the offset doesn't exceed half the board's dimensions
-        let x_min = offset.min(board.x_width / 2);
-        let y_min = offset.min(board.y_width / 2);
+        let x_min: usize = offset.min(board.x_width / 2);
+        let y_min: usize = offset.min(board.y_width / 2);
 
-        let x = rng.gen_range(x_min..(board.x_width - x_min)) as i32;
-        let y = rng.gen_range(y_min..(board.y_width - y_min)) as i32;
+        let x: i32 = rng.gen_range(x_min..(board.x_width - x_min)) as i32;
+        let y: i32 = rng.gen_range(y_min..(board.y_width - y_min)) as i32;
 
         Point { x, y }
     }
@@ -56,8 +56,8 @@ struct Snake {
 
 impl Snake {
     pub fn new(board: &Board, starting_length: usize) -> Snake {
-        let head = Point::get_random_with_offset(board, starting_length);
-        let mut current_point = head;
+        let head: Point = Point::get_random_with_offset(board, starting_length);
+        let mut current_point: Point = head;
         let mut body: VecDeque<Point> = VecDeque::new();
 
         body.push_back(head);
@@ -79,9 +79,9 @@ impl Snake {
     }
 
     pub fn move_direction(&mut self, direction: Direction) {
-        let head = *self.body.front().unwrap();
+        let head: Point = *self.body.front().unwrap();
 
-        let new_head = match direction {
+        let new_head: Point = match direction {
             Direction::Down => Point::move_down(head),
             Direction::Up => Point::move_up(head),
             Direction::Left => Point::move_left(head),
@@ -92,9 +92,7 @@ impl Snake {
     }
 
     pub fn shrink_tail(&mut self) {
-        self.body
-            .pop_back()
-            .unwrap();
+        self.body.pop_back().unwrap();
     }
 
     pub fn bit_itself(&self) -> bool {
@@ -131,10 +129,10 @@ struct Game {
 impl Game {
     pub fn new(x_width: usize, y_width: usize, starting_length: usize) -> Game {
         let board: Board = Board { x_width, y_width };
-        let snake = Snake::new(&board, starting_length);
+        let snake: Snake = Snake::new(&board, starting_length);
 
-        let fruit = loop {
-            let candidate = Point::get_random_with_offset(&board, 0);
+        let fruit: Point = loop {
+            let candidate: Point = Point::get_random_with_offset(&board, 0);
             if !snake.body.contains(&candidate) {
                 break candidate;
             }
@@ -188,7 +186,7 @@ impl Game {
                     print!("."); // Empty space
                 }
             }
-            println!(); 
+            println!();
         }
         println!();
     }
