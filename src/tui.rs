@@ -1,4 +1,4 @@
-use crate::core::{Direction as CoreDirection, Game, Point};
+use crate::core::{Direction as CoreDirection, Game, Point, Config};
 
 use crossterm::{
     event::{self, Event, KeyCode},
@@ -53,7 +53,7 @@ fn render_board<B: Backend>(
     frame.render_widget(paragraph, area);
 }
 
-pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_tui(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // Set up the terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -75,7 +75,7 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Initialize game with dynamic board size
-    let mut game = Game::new(board_width, board_height, 5);
+    let mut game = Game::new(board_width, board_height, config.snake_starting_length);
     let mut current_direction = game.get_initial_direction();
 
     while game.is_running() {
@@ -85,8 +85,7 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
             render_board(f, area, &game);
         })?;
 
-        // Increase Speed: Start at 50ms and get down up to 20ms
-        let milis: u64 =  20.min(50 - game.get_score() as u64);
+        let milis: u64 =  config.max_refresh_in_ms.min(config.start_refresh_in_ms - game.get_score() as u64);
 
         if event::poll(std::time::Duration::from_millis(milis))? {
             if let Event::Key(key) = event::read()? {

@@ -8,3 +8,5 @@ rand = "0.8.5"
 crossterm = "0.28.1"
 tui = "0.19"
 scopeguard = "1.1"
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }

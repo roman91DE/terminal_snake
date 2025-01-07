@@ -1,5 +1,9 @@
 use rand::Rng;
 use std::collections::VecDeque;
+use std::fs;
+use toml;
+
+use serde::Deserialize;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Board {
@@ -209,4 +213,24 @@ impl Game {
     pub fn get_board_y_width(&self) -> usize {
         self.board.get_y_width()
     }
+}
+
+
+
+
+#[derive(Deserialize, Debug)]
+pub struct Config {
+    pub snake_starting_length: usize,
+    pub start_refresh_in_ms: u64,
+    pub max_refresh_in_ms: u64,
+}
+
+pub fn parse_config() -> Result<Config, Box<dyn std::error::Error>> {
+    let toml_content = fs::read_to_string(".config/config.toml")?;
+    let config: Config = toml::from_str(&toml_content)?;
+    Ok(config)
+}
+
+pub fn get_config() -> Config {
+    parse_config().unwrap_or(Config{snake_starting_length: 3, start_refresh_in_ms: 100, max_refresh_in_ms: 50})
 }

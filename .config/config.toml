@@ -1,0 +1,3 @@
+snake_starting_length = 5
+start_refresh_in_ms =  100
+max_refresh_in_ms =  30
