@@ -23,8 +23,8 @@ A classic Snake game written in **Rust**, designed to run directly in your termi
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/terminal-snake-game.git
-   cd terminal-snake-game
+   git clone https://github.com/roman91DE/terminal_snake.git
+   cd terminal-snake
    ```
 
 2. **Build the game**:
@@ -33,7 +33,12 @@ A classic Snake game written in **Rust**, designed to run directly in your termi
    cargo build --release
    ```
 
-3. **Run the game**:
+   Alternativley, you can use `make`
+   ```bash
+   make release
+   ```
+
+4. **Run the game**:
    ```bash
    cargo run --release
    ```
