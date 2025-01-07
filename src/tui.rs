@@ -85,7 +85,7 @@ pub fn run_tui(config: Config) -> Result<(), Box<dyn std::error::Error>> {
             render_board(f, area, &game);
         })?;
 
-        let milis: u64 =  config.max_refresh_in_ms.min(config.start_refresh_in_ms - game.get_score() as u64);
+        let milis: u64 =  config.max_refresh_in_ms.max(config.start_refresh_in_ms - game.get_score() as u64);
 
         if event::poll(std::time::Duration::from_millis(milis))? {
             if let Event::Key(key) = event::read()? {
