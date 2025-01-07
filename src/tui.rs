@@ -10,7 +10,6 @@ use std::io::{self};
 
 use tui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
     widgets::{Block, Borders},
     Terminal,
 };
@@ -36,9 +35,9 @@ fn render_board<B: Backend>(
         for x in 0..game.get_board_x_width() {
             let p = Point::new(x.try_into().unwrap(), y.try_into().unwrap());
             if game.snake.contains_point(p) {
-                row.push('O'); // Snake body
+                row.push('x'); // Snake body
             } else if game.fruit == p {
-                row.push('F'); // Fruit
+                row.push('o'); // Fruit
             } else {
                 row.push(' '); // Empty cell
             }
@@ -48,7 +47,7 @@ fn render_board<B: Backend>(
 
     let text = rows.into_iter().map(Spans::from).collect::<Vec<_>>();
     let paragraph = Paragraph::new(text)
-        .block(Block::default().title("Game Area").borders(Borders::ALL))
+        .block(Block::default().title("Terminal-Snake").borders(Borders::ALL))
         .style(Style::default().fg(Color::White));
 
     frame.render_widget(paragraph, area);
@@ -62,44 +61,63 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // Game state
-    let mut game = Game::new(20, 30, 3);
+    // Get terminal dimensions
+    let (width, height) = crossterm::terminal::size()?;
+    let board_width = (width-2) as usize; // - 1 since core uses 0/0 instead of 1/1 for upper left origin
+    let board_height = (height-2) as usize; 
+
+    // Ensure the board is large enough to play
+    if board_width < 10 || board_height < 10 {
+        disable_raw_mode()?;
+        execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+        terminal.show_cursor()?;
+        return Err("Terminal size is too small to play!".into());
+    }
+
+    // Initialize game with dynamic board size
+    let mut game = Game::new(board_width, board_height, 5);
+    let mut current_direction = game.get_initial_direction();
 
     while game.is_running() {
-        // Render UI
+        // Render the game area
         terminal.draw(|f| {
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(1)
-                .constraints([Constraint::Percentage(80), Constraint::Percentage(20)].as_ref())
-                .split(f.size());
-
-            // Render the game area
-            render_board(f, chunks[0], &game);
-
-            // Render controls
-            let controls = Block::default().title("Controls").borders(Borders::ALL);
-            f.render_widget(controls, chunks[1]);
+            let area = f.size(); // Use the full terminal area
+            render_board(f, area, &game);
         })?;
 
-        // Handle user input
-        if event::poll(std::time::Duration::from_millis(100))? {
+        // Increase Speed: Start at 50ms and get down up to 20ms
+        let milis: u64 =  20.min(50 - game.get_score() as u64);
+
+        if event::poll(std::time::Duration::from_millis(milis))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => game.stop(),
-                    KeyCode::Up => game.progress(Some(CoreDirection::Up)),
-                    KeyCode::Down => game.progress(Some(CoreDirection::Down)),
-                    KeyCode::Left => game.progress(Some(CoreDirection::Left)),
-                    KeyCode::Right => game.progress(Some(CoreDirection::Right)),
+                    KeyCode::Up if current_direction != CoreDirection::Down => {
+                        current_direction = CoreDirection::Up;
+                    }
+                    KeyCode::Down if current_direction != CoreDirection::Up => {
+                        current_direction = CoreDirection::Down;
+                    }
+                    KeyCode::Left if current_direction != CoreDirection::Right => {
+                        current_direction = CoreDirection::Left;
+                    }
+                    KeyCode::Right if current_direction != CoreDirection::Left => {
+                        current_direction = CoreDirection::Right;
+                    }
                     _ => {}
                 }
             }
         }
+
+        // Progress the game in the current direction
+        game.progress(Some(current_direction));
     }
 
     // Restore terminal
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    println!("Snake died :-(");
+    println!("Score: {}", game.get_score());
     terminal.show_cursor()?;
     Ok(())
 }

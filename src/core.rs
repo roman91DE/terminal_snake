@@ -1,9 +1,8 @@
 use rand::Rng;
 use std::collections::VecDeque;
-use std::io::{self, Write}; // for raw printing only
 
 #[derive(Debug, Clone, Copy)]
-struct Board {
+pub struct Board {
     x_width: usize,
     y_width: usize,
 }
@@ -55,6 +54,7 @@ impl Point {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
     Left,
     Right,
@@ -112,16 +112,16 @@ impl Snake {
         if let Some(head) = self.body.front() {
             self.body.iter().skip(1).any(|segment| segment == head)
         } else {
-            false // If the body is empty, consider it not in a legal position
+            false
         }
     }
 
     pub fn hit_wall(&self, board: &Board) -> bool {
         if let Some(head) = self.body.front() {
             head.x < 0
-                || head.x == board.x_width as i32
+                || head.x >= board.x_width as i32
                 || head.y < 0
-                || head.y == board.y_width as i32
+                || head.y >= board.y_width as i32
         } else {
             false
         }
@@ -162,6 +162,17 @@ impl Game {
         (self.snake.body.len() - self.snake.starting_length) as u32
     }
 
+    pub fn get_initial_direction(&self) -> Direction {
+        let head_pos = *self.snake.body.front().unwrap();
+        let board_y_mid = self.get_board_y_width() / 2;
+
+        if head_pos.y >= board_y_mid as i32 {
+            Direction::Up
+        } else {
+            Direction::Down
+        }
+    }
+
     pub fn is_running(&self) -> bool {
         self.running
     }
@@ -182,7 +193,7 @@ impl Game {
 
         if head_pos == self.fruit {
             self.fruit = loop {
-                let new_fruit = Point::get_random_with_offset(&self.board, 0);
+                let new_fruit = Point::get_random_with_offset(&self.board, 1);
                 if !self.snake.contains_point(new_fruit) {
                     break new_fruit;
                 }
@@ -198,62 +209,4 @@ impl Game {
     pub fn get_board_y_width(&self) -> usize {
         self.board.get_y_width()
     }
-
-    pub fn draw_raw(&self) {
-        for y in 0..self.board.y_width {
-            for x in 0..self.board.x_width {
-                let point = Point {
-                    x: x as i32,
-                    y: y as i32,
-                };
-                if self.snake.contains_point(point) {
-                    print!("S"); // Snake body
-                } else if point == self.fruit {
-                    print!("F"); // Fruit
-                } else {
-                    print!("."); // Empty space
-                }
-            }
-            println!();
-        }
-        println!();
-    }
-}
-
-fn debug_run() {
-    let mut game = Game::new(12, 16, 3);
-
-    println!("Use W (Up), A (Left), S (Down), D (Right) to move. Press Enter after typing.");
-
-    while game.running {
-        println!("Current Score: {}", game.get_score());
-        game.draw_raw();
-
-        // Prompt for input
-        print!("Enter direction: ");
-        io::stdout().flush().unwrap(); // Ensure the prompt is printed immediately
-
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read input");
-
-        // Parse input to a Direction
-        let input = input.trim(); // Remove extra whitespace
-        let direction = match input {
-            "w" | "W" => Some(Direction::Up),
-            "a" | "A" => Some(Direction::Left),
-            "s" | "S" => Some(Direction::Down),
-            "d" | "D" => Some(Direction::Right),
-            _ => None, // Invalid input
-        };
-        if direction.is_none() {
-            println!("Invalid input! Use W, A, S, or D.");
-        }
-
-        // Progress the game with the parsed direction
-        game.progress(direction);
-    }
-
-    println!("Game Over!");
 }
