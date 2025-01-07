@@ -91,16 +91,16 @@ pub fn run_tui(config: Config) -> Result<(), Box<dyn std::error::Error>> {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => game.stop(),
-                    KeyCode::Up if current_direction != CoreDirection::Down => {
+                    KeyCode::Up if !current_direction.is_opposite(CoreDirection::Up) => {
                         current_direction = CoreDirection::Up;
                     }
-                    KeyCode::Down if current_direction != CoreDirection::Up => {
+                    KeyCode::Down if !current_direction.is_opposite(CoreDirection::Down) => {
                         current_direction = CoreDirection::Down;
                     }
-                    KeyCode::Left if current_direction != CoreDirection::Right => {
+                    KeyCode::Left if !current_direction.is_opposite(CoreDirection::Left) => {
                         current_direction = CoreDirection::Left;
                     }
-                    KeyCode::Right if current_direction != CoreDirection::Left => {
+                    KeyCode::Right if !current_direction.is_opposite(CoreDirection::Right) => {
                         current_direction = CoreDirection::Right;
                     }
                     _ => {}

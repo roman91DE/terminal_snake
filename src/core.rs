@@ -1,7 +1,6 @@
 use rand::Rng;
 use std::collections::VecDeque;
 use std::fs;
-use toml;
 
 use serde::Deserialize;
 
@@ -12,10 +11,10 @@ pub struct Board {
 }
 
 impl Board {
-    fn get_x_width(&self) -> usize {
+    pub fn get_x_width(&self) -> usize {
         self.x_width
     }
-    fn get_y_width(&self) -> usize {
+    pub fn get_y_width(&self) -> usize {
         self.y_width
     }
 }
@@ -47,7 +46,6 @@ impl Point {
     pub fn get_random_with_offset(board: &Board, offset: usize) -> Point {
         let mut rng = rand::thread_rng();
 
-        // Ensure the offset doesn't exceed half the board's dimensions
         let x_min: usize = offset.min(board.x_width / 2);
         let y_min: usize = offset.min(board.y_width / 2);
 
@@ -65,6 +63,19 @@ pub enum Direction {
     Up,
     Down,
 }
+
+impl Direction {
+    pub fn is_opposite(&self, other: Direction) -> bool {
+        matches!(
+            (self, other),
+            (Direction::Left, Direction::Right) |
+            (Direction::Right, Direction::Left) |
+            (Direction::Up, Direction::Down) |
+            (Direction::Down, Direction::Up)
+        )
+    }
+}
+
 
 pub struct Snake {
     body: VecDeque<Point>,
@@ -232,5 +243,15 @@ pub fn parse_config() -> Result<Config, Box<dyn std::error::Error>> {
 }
 
 pub fn get_config() -> Config {
-    parse_config().unwrap_or(Config{snake_starting_length: 3, start_refresh_in_ms: 100, max_refresh_in_ms: 50})
+    match parse_config() {
+        Ok(config) => config,
+        Err(e) => {
+            eprint!("Error reading config: {}\nFallback to Default Setting\n", e);
+            Config {
+                snake_starting_length: 3,
+                start_refresh_in_ms: 100,
+                max_refresh_in_ms: 50,
+            }
+        }
+    }
 }
